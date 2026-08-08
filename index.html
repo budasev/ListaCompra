@@ -14,12 +14,22 @@
             --border-color: #dddddd;
         }
 
+        /* Forzar colores claros fijos para evitar inversiones extrañas en modo oscuro del móvil */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-color: #e0e0e0;
+                --border-color: #333333;
+            }
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
         }
@@ -33,35 +43,41 @@
             text-align: center;
             color: var(--primary-color);
             margin-bottom: 25px;
+            font-size: 1.8rem;
         }
 
         .card {
             background: var(--card-bg);
-            padding: 20px;
+            color: var(--text-color);
+            padding: 15px;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
 
         h2 {
             font-size: 1.1rem;
             margin-top: 0;
-            color: #555555;
-            border-bottom: 2px solid var(--bg-color);
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 8px;
             margin-bottom: 15px;
         }
 
-        /* Formulario de texto */
+        /* Formulario adaptado para móviles (flex-wrap evita que el botón se salga) */
         .input-group {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         input[type="text"] {
             flex: 1;
-            padding: 10px 14px;
+            min-width: 200px;
+            padding: 12px;
             border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
             border-radius: 8px;
             font-size: 1rem;
             outline: none;
@@ -76,11 +92,12 @@
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 10px 18px;
+            padding: 12px 20px;
             border-radius: 8px;
             font-size: 1rem;
             cursor: pointer;
             transition: background-color 0.2s;
+            font-weight: 600;
         }
 
         button:hover {
@@ -92,8 +109,8 @@
             position: relative;
             border: 2px dashed var(--border-color);
             border-radius: 8px;
-            background-color: #fff;
-            touch-action: none; /* Evita el scroll en móviles al dibujar */
+            background-color: var(--card-bg);
+            touch-action: none;
         }
 
         canvas {
@@ -106,7 +123,12 @@
         .canvas-actions {
             display: flex;
             justify-content: space-between;
-            margin-top: 10px;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .canvas-actions button {
+            flex: 1;
         }
 
         .btn-secondary {
@@ -127,8 +149,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--bg-color);
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
             animation: fadeIn 0.3s ease;
         }
 
@@ -141,11 +163,12 @@
             align-items: center;
             gap: 12px;
             flex: 1;
+            word-break: break-word;
         }
 
         input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
             accent-color: var(--primary-color);
         }
@@ -155,19 +178,18 @@
             transition: color 0.2s, text-decoration 0.2s;
         }
 
-        /* Estilo cuando está comprado (checked) */
         li.completed .item-text {
             text-decoration: line-through;
-            color: #9e9e9e;
+            color: #888888;
         }
 
         .btn-delete {
             background: none;
             border: none;
             color: #e53935;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             cursor: pointer;
-            padding: 0 5px;
+            padding: 0 8px;
         }
 
         .btn-delete:hover {
@@ -210,16 +232,14 @@
             </div>
             <div class="canvas-actions">
                 <button type="button" id="clear-canvas" class="btn-secondary">Borrar trazo</button>
-                <button type="button" id="save-drawing">Guardar dibujo como nota</button>
+                <button type="button" id="save-drawing">Guardar dibujo</button>
             </div>
         </div>
 
         <!-- Sección 3: La Lista -->
         <div class="card">
             <h2>Productos pendientes</h2>
-            <ul id="shopping-list">
-                <!-- Los elementos se añadirán aquí dinámicamente -->
-            </ul>
+            <ul id="shopping-list"></ul>
             <p id="empty-notice" class="empty-message">Tu lista está vacía. ¡Añade algo de compra!</p>
         </div>
     </div>
@@ -230,17 +250,17 @@
         const list = document.getElementById('shopping-list');
         const emptyNotice = document.getElementById('empty-notice');
 
-        // Configuración del Canvas para escritura a mano
         const canvas = document.getElementById('draw-canvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
 
-        // Ajustar resolución real del canvas
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
-            ctx.strokeStyle = '#333';
+            // Color del trazo adaptativo según el tema del dispositivo
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            ctx.strokeStyle = isDark ? '#ffffff' : '#333333';
             ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -248,7 +268,6 @@
         window.addEventListener('load', resizeCanvas);
         window.addEventListener('resize', resizeCanvas);
 
-        // Funciones de dibujo (Soporta ratón y pantallas táctiles)
         function startPosition(e) {
             isDrawing = true;
             draw(e);
@@ -277,7 +296,6 @@
         canvas.addEventListener('mousedown', startPosition);
         canvas.addEventListener('mouseup', endPosition);
         canvas.addEventListener('mousemove', draw);
-
         canvas.addEventListener('touchstart', startPosition);
         canvas.addEventListener('touchend', endPosition);
         canvas.addEventListener('touchmove', draw);
@@ -286,17 +304,12 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        // Guardar lo escrito a mano convirtiéndolo en imagen dentro de la lista
         document.getElementById('save-drawing').addEventListener('click', () => {
-            // Comprobar si el canvas está vacío (método simple chequeando si hay datos o permitiéndolo)
             const dataURL = canvas.toDataURL();
-            
-            // Creamos un elemento li con la imagen
             addItemToList(dataURL, true);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        // Añadir por texto tradicional
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const value = input.value.trim();
@@ -306,7 +319,6 @@
             }
         });
 
-        // Función central para añadir elementos a la lista y gestionar almacenamiento local
         function addItemToList(content, isImage = false, completed = false) {
             emptyNotice.style.display = 'none';
 
@@ -331,7 +343,8 @@
                 img.src = content;
                 img.style.maxHeight = '40px';
                 img.style.background = '#fff';
-                img.style.border = '1px solid #ccc';
+                img.style.padding = '2px';
+                img.style.borderRadius = '4px';
                 itemLeft.appendChild(img);
             } else {
                 const span = document.createElement('span');
@@ -362,7 +375,6 @@
             }
         }
 
-        // --- Almacenamiento local (LocalStorage) para no perder los datos al cerrar ---
         function saveToLocalStorage() {
             const items = [];
             list.querySelectorAll('li').forEach(li => {
