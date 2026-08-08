@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Lista de la Compra Inteligente</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-hover: #1b5e20;
+            --bg-color: #f4f6f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            color: #555555;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* Formulario de texto */
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Lienzo de escritura a mano */
+        .canvas-container {
+            position: relative;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background-color: #fff;
+            touch-action: none; /* Evita el scroll en móviles al dibujar */
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 150px;
+            cursor: crosshair;
+        }
+
+        .canvas-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            background-color: #757575;
+        }
+        .btn-secondary:hover {
+            background-color: #616161;
+        }
+
+        /* Lista de productos */
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--bg-color);
+            animation: fadeIn 0.3s ease;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .item-text {
+            font-size: 1rem;
+            transition: color 0.2s, text-decoration 0.2s;
+        }
+
+        /* Estilo cuando está comprado (checked) */
+        li.completed .item-text {
+            text-decoration: line-through;
+            color: #9e9e9e;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .btn-delete:hover {
+            color: #b71c1c;
+            background: none;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #888888;
+            font-style: italic;
+            margin: 15px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🛒 Mi Lista de la Compra</h1>
+
+        <!-- Sección 1: Añadir texto -->
+        <div class="card">
+            <h2>Añadir por texto</h2>
+            <form id="item-form" class="input-group">
+                <input type="text" id="item-input" placeholder="Ej. Tomates, Leche, Pan..." autocomplete="off">
+                <button type="submit">Añadir</button>
+            </form>
+        </div>
+
+        <!-- Sección 2: Escritura a mano -->
+        <div class="card">
+            <h2>Añadir escribiendo a mano / Notas</h2>
+            <div class="canvas-container">
+                <canvas id="draw-canvas"></canvas>
+            </div>
+            <div class="canvas-actions">
+                <button type="button" id="clear-canvas" class="btn-secondary">Borrar trazo</button>
+                <button type="button" id="save-drawing">Guardar dibujo como nota</button>
+            </div>
+        </div>
+
+        <!-- Sección 3: La Lista -->
+        <div class="card">
+            <h2>Productos pendientes</h2>
+            <ul id="shopping-list">
+                <!-- Los elementos se añadirán aquí dinámicamente -->
+            </ul>
+            <p id="empty-notice" class="empty-message">Tu lista está vacía. ¡Añade algo de compra!</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('item-form');
+        const input = document.getElementById('item-input');
+        const list = document.getElementById('shopping-list');
+        const emptyNotice = document.getElementById('empty-notice');
+
+        // Configuración del Canvas para escritura a mano
+        const canvas = document.getElementById('draw-canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        // Ajustar resolución real del canvas
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        // Funciones de dibujo (Soporta ratón y pantallas táctiles)
+        function startPosition(e) {
+            isDrawing = true;
+            draw(e);
+        }
+        function endPosition() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', startPosition);
+        canvas.addEventListener('mouseup', endPosition);
+        canvas.addEventListener('mousemove', draw);
+
+        canvas.addEventListener('touchstart', startPosition);
+        canvas.addEventListener('touchend', endPosition);
+        canvas.addEventListener('touchmove', draw);
+
+        document.getElementById('clear-canvas').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Guardar lo escrito a mano convirtiéndolo en imagen dentro de la lista
+        document.getElementById('save-drawing').addEventListener('click', () => {
+            // Comprobar si el canvas está vacío (método simple chequeando si hay datos o permitiéndolo)
+            const dataURL = canvas.toDataURL();
+            
+            // Creamos un elemento li con la imagen
+            addItemToList(dataURL, true);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Añadir por texto tradicional
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const value = input.value.trim();
+            if (value !== '') {
+                addItemToList(value, false);
+                input.value = '';
+            }
+        });
+
+        // Función central para añadir elementos a la lista y gestionar almacenamiento local
+        function addItemToList(content, isImage = false, completed = false) {
+            emptyNotice.style.display = 'none';
+
+            const li = document.createElement('li');
+            if (completed) li.classList.add('completed');
+
+            const itemLeft = document.createElement('div');
+            itemLeft.className = 'item-left';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = completed;
+            checkbox.addEventListener('change', () => {
+                li.classList.toggle('completed', checkbox.checked);
+                saveToLocalStorage();
+            });
+
+            itemLeft.appendChild(checkbox);
+
+            if (isImage) {
+                const img = document.createElement('img');
+                img.src = content;
+                img.style.maxHeight = '40px';
+                img.style.background = '#fff';
+                img.style.border = '1px solid #ccc';
+                itemLeft.appendChild(img);
+            } else {
+                const span = document.createElement('span');
+                span.className = 'item-text';
+                span.textContent = content;
+                itemLeft.appendChild(span);
+            }
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.addEventListener('click', () => {
+                li.remove();
+                checkEmpty();
+                saveToLocalStorage();
+            });
+
+            li.appendChild(itemLeft);
+            li.appendChild(deleteBtn);
+            list.appendChild(li);
+
+            saveToLocalStorage();
+        }
+
+        function checkEmpty() {
+            if (list.children.length === 0) {
+                emptyNotice.style.display = 'block';
+            }
+        }
+
+        // --- Almacenamiento local (LocalStorage) para no perder los datos al cerrar ---
+        function saveToLocalStorage() {
+            const items = [];
+            list.querySelectorAll('li').forEach(li => {
+                const isCompleted = li.classList.contains('completed');
+                const img = li.querySelector('img');
+                const span = li.querySelector('.item-text');
+                
+                if (img) {
+                    items.push({ content: img.src, isImage: true, completed: isCompleted });
+                } else if (span) {
+                    items.push({ content: span.textContent, isImage: false, completed: isCompleted });
+                }
+            });
+            localStorage.setItem('shoppingList', JSON.stringify(items));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('shoppingList');
+            if (saved) {
+                const items = JSON.parse(saved);
+                items.forEach(item => {
+                    addItemToList(item.content, item.isImage, item.completed);
+                });
+            }
+            checkEmpty();
+        }
+
+        loadFromLocalStorage();
+    </script>
+</body>
+</html>
