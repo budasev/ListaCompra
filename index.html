@@ -31,6 +31,8 @@
         .card { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { font-size: 1.1rem; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
+        .header-left { display: flex; align-items: center; gap: 10px; }
+
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
         input[type="text"] { flex: 1; min-width: 200px; padding: 12px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-color); border-radius: 8px; outline: none; }
         button { background-color: var(--primary-color); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
@@ -54,7 +56,6 @@
         input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0; }
         .completed { text-decoration: line-through; opacity: 0.6; }
         
-        /* Ajuste clave para igualar la altura de las notas a mano con los textos */
         .item-left img { height: 28px; max-width: 180px; object-fit: contain; display: block; }
         
         .item-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -92,7 +93,10 @@
 
         <div class="card">
             <h2>
-                Pendientes <span id="pending-badge" class="badge">0</span>
+                <div class="header-left">
+                    <span>Pendientes</span>
+                    <span id="pending-badge" class="badge">0</span>
+                </div>
                 <button id="clear-all-btn" class="btn-danger" style="display:none;">Vaciar todo</button>
             </h2>
             <ul id="shopping-list"></ul>
