@@ -1,128 +1,127 @@
 <!DOCTYPE html>
-<html lang="es" class="dark-theme">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de la Compra</title>
     <style>
-        :root { --primary-color: #2e7d32; --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0; --border-color: #333; }
-        .light-theme { --bg-color: #f4f6f5; --card-bg: #fff; --text-color: #333; --border-color: #ddd; }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; padding: 15px; display: flex; justify-content: center; }
+        :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --primary: #2e7d32; }
+        .light { --bg: #f4f6f5; --card: #ffffff; --text: #333333; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; }
-        .card { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { font-size: 1.1rem; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; margin-top: 0; }
-        .input-group { display: flex; gap: 5px; }
-        input { flex: 1; padding: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 5px; }
-        button { cursor: pointer; padding: 10px; border: none; border-radius: 5px; background: var(--primary-color); color: white; }
-        #theme-toggle { background: none; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 20px; font-size: 1.2rem; }
-        .canvas-container { border: 1px solid var(--border-color); background: white; margin: 10px 0; touch-action: none; }
-        canvas { width: 100%; height: 100px; display: block; cursor: crosshair; }
-        .hidden { display: none !important; }
-        li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); align-items: center; }
-        .item-content { display: flex; align-items: center; gap: 10px; }
-        .btn-del { color: #d32f2f; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .input-row { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border: 1px solid #444; border-radius: 6px; background: var(--bg); color: var(--text); }
+        button { padding: 10px 15px; border: none; border-radius: 6px; background: var(--primary); color: white; cursor: pointer; }
+        canvas { background: white; width: 100%; height: 100px; touch-action: none; cursor: crosshair; }
+        ul { list-style: none; padding: 0; }
+        li { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444; }
+        .item-text { display: flex; align-items: center; gap: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
-<body>
-
+<body class="dark">
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h1>🛒 Lista</h1>
-        <button id="theme-toggle">🌙</button>
-    </div>
-
+    <h1>🛒 Lista <button id="theme-btn" style="background:none; font-size: 1.5rem;">🌙</button></h1>
+    
     <div class="card">
-        <form id="item-form" class="input-group">
+        <div class="input-row">
             <input type="text" id="item-input" placeholder="Añadir producto...">
-            <button type="submit">Añadir</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <button type="button" id="toggle-canvas" style="width:100%;">✏️ Dibujar nota</button>
-        <div id="canvas-wrapper" class="hidden">
-            <div class="canvas-container"><canvas id="draw-canvas"></canvas></div>
-            <button type="button" id="clear-canvas" style="background:#777;">Borrar</button>
-            <button type="button" id="save-canvas">Guardar</button>
+            <button id="add-btn">Añadir</button>
         </div>
     </div>
 
     <div class="card">
-        <h2>Pendientes <button id="clear-pendings" class="hidden" style="background:#d32f2f; padding:5px 10px;">Vaciar</button></h2>
-        <ul id="list"></ul>
+        <button id="toggle-canvas" style="width:100%;">✏️ Dibujar nota</button>
+        <div id="canvas-area" class="hidden">
+            <canvas id="canvas"></canvas>
+            <button id="clear-canvas" style="background:#777;">Borrar</button>
+            <button id="save-canvas">Guardar</button>
+        </div>
     </div>
 
     <div class="card">
-        <h2>Comprados <button id="clear-bought" class="hidden" style="background:#d32f2f; padding:5px 10px;">Vaciar</button></h2>
-        <ul id="bought-list"></ul>
+        <h2>Pendientes <button id="clear-pendings" class="hidden btn-danger" style="background:#d32f2f;">Vaciar</button></h2>
+        <ul id="list-pendings"></ul>
+    </div>
+
+    <div class="card">
+        <h2>Comprados <button id="clear-bought" class="hidden btn-danger" style="background:#d32f2f;">Vaciar</button></h2>
+        <ul id="list-bought"></ul>
     </div>
 </div>
 
 <script>
-    const list = document.getElementById('list'), boughtList = document.getElementById('bought-list'), canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
     let drawing = false;
 
-    // Persistencia
-    function saveAll() {
-        localStorage.setItem('list', list.innerHTML);
-        localStorage.setItem('bought', boughtList.innerHTML);
+    // --- Lógica de persistencia ---
+    function save() {
+        const items = [];
+        document.querySelectorAll('#list-pendings li').forEach(li => items.push({content: li.dataset.content, isImg: li.dataset.isImg === 'true', completed: false}));
+        document.querySelectorAll('#list-bought li').forEach(li => items.push({content: li.dataset.content, isImg: li.dataset.isImg === 'true', completed: true}));
+        localStorage.setItem('data', JSON.stringify(items));
         updateUI();
     }
 
-    window.onload = () => {
-        list.innerHTML = localStorage.getItem('list') || '';
-        boughtList.innerHTML = localStorage.getItem('bought') || '';
+    function render() {
+        const items = JSON.parse(localStorage.getItem('data') || '[]');
+        document.getElementById('list-pendings').innerHTML = '';
+        document.getElementById('list-bought').innerHTML = '';
+        items.forEach(item => addItemToDOM(item.content, item.isImg, item.completed));
         updateUI();
-    };
+    }
 
-    // UI y lógica
-    document.getElementById('theme-toggle').onclick = (e) => {
-        document.documentElement.classList.toggle('light-theme');
-        e.target.textContent = document.documentElement.classList.contains('light-theme') ? '☀️' : '🌙';
-    };
+    // --- Lógica de UI ---
+    function addItemToDOM(content, isImg, completed) {
+        const li = document.createElement('li');
+        li.dataset.content = content;
+        li.dataset.isImg = isImg;
+        li.innerHTML = `
+            <div class="item-text">
+                <input type="checkbox" ${completed ? 'checked' : ''}>
+                ${isImg ? `<img src="${content}" style="height:30px;">` : `<span>${content}</span>`}
+            </div>
+            <button class="del-btn" style="color:red; background:none; border:none; cursor:pointer;">✕</button>
+        `;
+        li.querySelector('input').onclick = () => { save(); render(); };
+        li.querySelector('.del-btn').onclick = () => { li.remove(); save(); render(); };
+        (completed ? document.getElementById('list-bought') : document.getElementById('list-pendings')).appendChild(li);
+    }
 
     function updateUI() {
-        document.getElementById('clear-pendings').classList.toggle('hidden', list.children.length === 0);
-        document.getElementById('clear-bought').classList.toggle('hidden', boughtList.children.length === 0);
+        document.getElementById('clear-pendings').classList.toggle('hidden', document.getElementById('list-pendings').children.length === 0);
+        document.getElementById('clear-bought').classList.toggle('hidden', document.getElementById('list-bought').children.length === 0);
     }
 
-    function createItem(content, isImage, isBought = false) {
-        const li = document.createElement('li');
-        li.innerHTML = `<div class="item-content"><input type="checkbox" ${isBought ? 'checked' : ''}> ${isImage ? `<img src="${content}" style="height:30px">` : content}</div><button class="btn-del">×</button>`;
-        li.querySelector('input').onchange = (e) => { (e.target.checked ? boughtList : list).appendChild(li); saveAll(); };
-        li.querySelector('.btn-del').onclick = () => { li.remove(); saveAll(); };
-        (isBought ? boughtList : list).appendChild(li);
-        saveAll();
-    }
+    // --- Eventos ---
+    document.getElementById('add-btn').onclick = () => {
+        const val = document.getElementById('item-input').value;
+        if(val) { addItemToDOM(val, false, false); document.getElementById('item-input').value = ''; save(); }
+    };
 
-    // Canvas corregido
-    function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        return { x: (e.clientX || e.touches[0].clientX) - rect.left, y: (e.clientY || e.touches[0].clientY) - rect.top };
-    }
-
-    canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-    canvas.onmousemove = (e) => { if(drawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+    document.getElementById('toggle-canvas').onclick = () => document.getElementById('canvas-area').classList.toggle('hidden');
+    
+    canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+    canvas.onmousemove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
     canvas.onmouseup = () => drawing = false;
 
     document.getElementById('save-canvas').onclick = () => {
-        if (!canvas.toDataURL().startsWith('data:image/png;base64,iVBORw0KGgoAAA')) { // Si no está vacío
-            createItem(canvas.toDataURL(), true);
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            document.getElementById('canvas-wrapper').classList.add('hidden');
-        }
+        addItemToDOM(canvas.toDataURL(), true, false);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        document.getElementById('canvas-area').classList.add('hidden');
+        save();
     };
 
-    document.getElementById('item-form').onsubmit = (e) => {
-        e.preventDefault();
-        const val = document.getElementById('item-input').value;
-        if(val) { createItem(val, false); document.getElementById('item-input').value = ''; }
+    document.getElementById('theme-btn').onclick = () => {
+        document.body.classList.toggle('light');
+        document.getElementById('theme-btn').textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
     };
 
-    document.getElementById('clear-pendings').onclick = () => { list.innerHTML = ''; saveAll(); };
-    document.getElementById('clear-bought').onclick = () => { boughtList.innerHTML = ''; saveAll(); };
-    document.getElementById('toggle-canvas').onclick = () => document.getElementById('canvas-wrapper').classList.toggle('hidden');
-    document.getElementById('clear-canvas').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
+    document.getElementById('clear-pendings').onclick = () => { document.getElementById('list-pendings').innerHTML = ''; save(); };
+    document.getElementById('clear-bought').onclick = () => { document.getElementById('list-bought').innerHTML = ''; save(); };
+
+    render();
 </script>
 </body>
 </html>
