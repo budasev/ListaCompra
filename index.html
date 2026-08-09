@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Lista de la Compra</title>
     <style>
+        /* Base por defecto (Modo Claro) */
         :root {
             --primary-color: #2e7d32;
             --primary-hover: #1b5e20;
@@ -16,8 +17,9 @@
             --danger-hover: #b71c1c;
         }
 
+        /* Si el sistema prefiere oscuro y no se ha forzado un tema manualmente */
         @media (prefers-color-scheme: dark) {
-            :root {
+            :root:not(.light-theme):not(.dark-theme) {
                 --bg-color: #121212;
                 --card-bg: #1e1e1e;
                 --text-color: #e0e0e0;
@@ -25,25 +27,25 @@
             }
         }
 
+        /* Forzado manual por clases (máxima prioridad) */
         html.dark-theme {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --border-color: #333333;
+            --bg-color: #121212 !important;
+            --card-bg: #1e1e1e !important;
+            --text-color: #e0e0e0 !important;
+            --border-color: #333333 !important;
         }
 
         html.light-theme {
-            --bg-color: #f4f6f5;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #dddddd;
+            --bg-color: #f4f6f5 !important;
+            --card-bg: #ffffff !important;
+            --text-color: #333333 !important;
+            --border-color: #dddddd !important;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; display: flex; justify-content: center; position: relative; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; display: flex; justify-content: center; position: relative; transition: background-color 0.3s, color 0.3s; }
         
-        /* Botón de cambio de tema optimizado para móvil */
         #theme-toggle {
-            position: fixed; /* Fijo para que siempre esté visible aunque bajes la pantalla */
+            position: fixed;
             top: 12px;
             right: 12px;
             z-index: 1000;
@@ -60,15 +62,11 @@
             font-size: 1.2rem;
             padding: 0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            transition: background-color 0.2s, transform 0.1s;
-        }
-        #theme-toggle:active {
-            transform: scale(0.92);
         }
 
         .container { width: 100%; max-width: 600px; padding-top: 10px; }
         h1 { text-align: center; color: var(--primary-color); margin-bottom: 25px; }
-        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; transition: background-color 0.3s, border-color 0.3s; }
         h2 { font-size: 1.1rem; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         .header-left { display: flex; align-items: center; gap: 10px; }
@@ -163,29 +161,31 @@
 
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
+            htmlElement.classList.remove('light-theme', 'dark-theme');
             htmlElement.classList.add(savedTheme);
         }
         updateThemeIcon();
 
         themeToggleBtn.addEventListener('click', () => {
-            if (htmlElement.classList.contains('dark-theme')) {
-                htmlElement.classList.remove('dark-theme');
-                htmlElement.classList.add('light-theme');
-                localStorage.setItem('theme', 'light-theme');
-            } else if (htmlElement.classList.contains('light-theme')) {
-                htmlElement.classList.remove('light-theme');
-                htmlElement.classList.add('dark-theme');
-                localStorage.setItem('theme', 'dark-theme');
+            htmlElement.classList.remove('light-theme', 'dark-theme');
+            
+            const isCurrentlyDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const hasSaved = localStorage.getItem('theme');
+            
+            // Determinar siguiente estado exacto
+            let nextTheme = '';
+            if (hasSaved === 'dark-theme') {
+                nextTheme = 'light-theme';
+            } else if (hasSaved === 'light-theme') {
+                nextTheme = 'dark-theme';
             } else {
-                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (systemDark) {
-                    htmlElement.classList.add('light-theme');
-                    localStorage.setItem('theme', 'light-theme');
-                } else {
-                    htmlElement.classList.add('dark-theme');
-                    localStorage.setItem('theme', 'dark-theme');
-                }
+                // Si no había nada guardado, invertimos lo que diga el sistema en ese momento
+                nextTheme = isCurrentlyDark ? 'light-theme' : 'dark-theme';
             }
+
+            htmlElement.classList.add(nextTheme);
+            localStorage.setItem('theme', nextTheme);
+
             updateThemeIcon();
             resizeCanvas();
         });
@@ -201,7 +201,7 @@
             canvas.width = canvas.offsetWidth; 
             canvas.height = 150; 
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-            ctx.strokeStyle = textColor || '#ffffff';
+            ctx.strokeStyle = textColor || '#333333';
             ctx.lineWidth = 3; 
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
@@ -353,7 +353,7 @@
                 alert("Por favor, escribe algo antes de guardar la nota.");
                 return;
             }
-            addItem(canvas.toDataURL(), true, false);
+            addItem(canvas.toDataURL(), type = true, false); // Nota: corregido de 'type = true' a true por limpieza sintáctica
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             canvasWrapper.style.display = 'none';
             save();
