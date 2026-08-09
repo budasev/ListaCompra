@@ -14,7 +14,6 @@
             --border-color: #dddddd;
         }
 
-        /* Forzar colores claros fijos para evitar inversiones extrañas en modo oscuro del móvil */
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #121212;
@@ -64,7 +63,6 @@
             margin-bottom: 15px;
         }
 
-        /* Formulario adaptado para móviles (flex-wrap evita que el botón se salga) */
         .input-group {
             display: flex;
             gap: 10px;
@@ -104,7 +102,6 @@
             background-color: var(--primary-hover);
         }
 
-        /* Lienzo de escritura a mano */
         .canvas-container {
             position: relative;
             border: 2px dashed var(--border-color);
@@ -138,7 +135,6 @@
             background-color: #616161;
         }
 
-        /* Lista de productos */
         ul {
             list-style: none;
             padding: 0;
@@ -183,6 +179,20 @@
             color: #888888;
         }
 
+        /* Estilo optimizado para el contenedor de la imagen escrita a mano */
+        .item-image-container {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+        }
+
+        .item-image-container img {
+            display: block;
+            max-height: 40px;
+        }
+
         .btn-delete {
             background: none;
             border: none;
@@ -215,7 +225,6 @@
     <div class="container">
         <h1>🛒 Mi Lista de la Compra</h1>
 
-        <!-- Sección 1: Añadir texto -->
         <div class="card">
             <h2>Añadir por texto</h2>
             <form id="item-form" class="input-group">
@@ -224,7 +233,6 @@
             </form>
         </div>
 
-        <!-- Sección 2: Escritura a mano -->
         <div class="card">
             <h2>Añadir escribiendo a mano / Notas</h2>
             <div class="canvas-container">
@@ -236,7 +244,6 @@
             </div>
         </div>
 
-        <!-- Sección 3: La Lista -->
         <div class="card">
             <h2>Productos pendientes</h2>
             <ul id="shopping-list"></ul>
@@ -258,7 +265,6 @@
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
-            // Color del trazo adaptativo según el tema del dispositivo
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             ctx.strokeStyle = isDark ? '#ffffff' : '#333333';
             ctx.lineWidth = 2.5;
@@ -305,7 +311,20 @@
         });
 
         document.getElementById('save-drawing').addEventListener('click', () => {
-            const dataURL = canvas.toDataURL();
+            // Creamos un lienzo temporal para añadir un fondo sólido adecuado según el tema actual antes de guardar
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            tempCtx.fillStyle = isDark ? '#1e1e1e' : '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Dibujamos encima el trazo original del usuario
+            tempCtx.drawImage(canvas, 0, 0);
+
+            const dataURL = tempCanvas.toDataURL();
             addItemToList(dataURL, true);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
@@ -339,13 +358,13 @@
             itemLeft.appendChild(checkbox);
 
             if (isImage) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'item-image-container';
+
                 const img = document.createElement('img');
                 img.src = content;
-                img.style.maxHeight = '40px';
-                img.style.background = '#fff';
-                img.style.padding = '2px';
-                img.style.borderRadius = '4px';
-                itemLeft.appendChild(img);
+                wrapper.appendChild(img);
+                itemLeft.appendChild(wrapper);
             } else {
                 const span = document.createElement('span');
                 span.className = 'item-text';
