@@ -98,9 +98,17 @@
         const emptyNotice = document.getElementById('empty-notice');
         const canvasWrapper = document.getElementById('canvas-wrapper'), canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
         
-        // Lógica Canvas
         let drawing = false;
-        function resizeCanvas() { canvas.width = canvas.offsetWidth; canvas.height = 150; ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; }
+        function resizeCanvas() { 
+            canvas.width = canvas.offsetWidth; 
+            canvas.height = 150; 
+            // Toma el color de texto actual del tema de forma automática
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+            ctx.strokeStyle = textColor || '#ffffff';
+            ctx.lineWidth = 3; 
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+        }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
