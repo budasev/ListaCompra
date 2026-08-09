@@ -14,6 +14,7 @@
             --border-color: #dddddd;
             --danger-color: #d32f2f;
             --danger-hover: #b71c1c;
+            --separator-bg: #f0f0f0; /* Color del separador grueso */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -22,6 +23,7 @@
                 --card-bg: #1e1e1e;
                 --text-color: #e0e0e0;
                 --border-color: #333333;
+                --separator-bg: #2a2a2a; /* Adaptación para modo oscuro */
             }
         }
 
@@ -51,6 +53,16 @@
         .completed { text-decoration: line-through; opacity: 0.6; }
         .item-image-container img { max-height: 40px; display: block; }
         .btn-delete { background: none; border: none; color: #e53935; font-size: 1.4rem; cursor: pointer; }
+
+        /* Separador grueso */
+        .thick-divider {
+            display: none;
+            height: 12px;
+            background-color: var(--separator-bg);
+            margin: 15px -15px; /* Se extiende hasta los bordes de la tarjeta */
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -80,7 +92,8 @@
         <div class="card">
             <h2>Pendientes <button id="clear-all-btn" class="btn-danger" style="display:none;">Vaciar todo</button></h2>
             <ul id="shopping-list"></ul>
-            <h2 id="bought-header" style="display:none; margin-top:20px; color:#888;">Ya comprado</h2>
+            
+            <div id="bought-divider" class="thick-divider"></div>
             <ul id="bought-list"></ul>
         </div>
     </div>
@@ -88,10 +101,9 @@
     <script>
         const form = document.getElementById('item-form'), input = document.getElementById('item-input');
         const list = document.getElementById('shopping-list'), boughtList = document.getElementById('bought-list');
-        const boughtHeader = document.getElementById('bought-header'), clearAllBtn = document.getElementById('clear-all-btn');
+        const boughtDivider = document.getElementById('bought-divider'), clearAllBtn = document.getElementById('clear-all-btn');
         const canvasWrapper = document.getElementById('canvas-wrapper'), canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
 
-        // Lógica de dibujo y eventos...
         document.getElementById('toggle-canvas-btn').addEventListener('click', () => {
             const show = canvasWrapper.style.display !== 'block';
             canvasWrapper.style.display = show ? 'block' : 'none';
@@ -131,7 +143,7 @@
         }
 
         function updateUI() {
-            boughtHeader.style.display = boughtList.children.length > 0 ? 'block' : 'none';
+            boughtDivider.style.display = boughtList.children.length > 0 ? 'block' : 'none';
             clearAllBtn.style.display = (list.children.length + boughtList.children.length) > 0 ? 'block' : 'none';
         }
 
@@ -153,11 +165,9 @@
             localStorage.setItem('list', JSON.stringify(items));
         }
 
-        // Carga inicial
         const saved = JSON.parse(localStorage.getItem('list') || '[]');
         saved.forEach(i => addItem(i.content, i.isImage, i.completed));
         
-        // ... (resto de funciones de lienzo simplificadas)
         document.getElementById('save-drawing').onclick = () => {
             addItem(canvas.toDataURL(), true, false);
             ctx.clearRect(0,0,canvas.width,canvas.height);
