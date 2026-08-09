@@ -3,25 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Esta etiqueta le indica al navegador que no fuerce colores -->
     <meta name="color-scheme" content="light dark">
     <title>Mi Lista de la Compra</title>
     <style>
         :root {
-            /* Bloquea la inversión automática de colores en Android */
             color-scheme: light dark;
-            
             --primary-color: #2e7d32;
-            --primary-hover: #1b5e20;
             --bg-color: #f4f6f5;
             --card-bg: #ffffff;
             --text-color: #333333;
             --border-color: #dddddd;
             --danger-color: #d32f2f;
-            --danger-hover: #b71c1c;
         }
 
-        /* Forzado manual por clases con alta prioridad */
         html.dark-theme {
             --bg-color: #121212 !important;
             --card-bg: #1e1e1e !important;
@@ -36,72 +30,37 @@
             --border-color: #dddddd !important;
         }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background-color: var(--bg-color); 
-            color: var(--text-color); 
-            margin: 0; 
-            padding: 15px; 
-            display: flex; 
-            justify-content: center; 
-            position: relative; 
-            transition: background-color 0.3s, color 0.3s; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
         
-        #theme-toggle {
-            position: fixed;
-            top: 12px;
-            right: 12px;
-            z-index: 1000;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
+        #theme-toggle { position: fixed; top: 12px; right: 12px; z-index: 1000; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        .container { width: 100%; max-width: 600px; padding-top: 10px; }
-        h1 { text-align: center; color: var(--primary-color); margin-bottom: 25px; }
+        .container { width: 100%; max-width: 600px; }
         .card { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { font-size: 1.1rem; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
+        .badge { background-color: var(--primary-color); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; display: none; }
+        
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        input[type="text"] { flex: 1; min-width: 200px; padding: 12px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-color); border-radius: 8px; outline: none; }
-        button { background-color: var(--primary-color); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        input[type="text"] { flex: 1; min-width: 200px; padding: 12px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-color); border-radius: 8px; }
+        button { background-color: var(--primary-color); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        .collapsible-btn { background-color: #555; width: 100%; text-align: left; display: flex; justify-content: space-between; border: none; color: white; padding: 12px; border-radius: 8px; cursor: pointer; }
         #canvas-wrapper { display: none; margin-top: 10px; }
-        .canvas-container { border: 2px dashed var(--border-color); border-radius: 8px; background-color: var(--card-bg); width: 100%; touch-action: none; }
+        .canvas-container { border: 2px dashed var(--border-color); background-color: var(--card-bg); width: 100%; touch-action: none; }
         canvas { display: block; width: 100%; height: 150px; cursor: crosshair; }
-        
-        .btn-danger { background-color: var(--danger-color); font-size: 0.8rem; padding: 5px 10px; }
         
         ul { list-style: none; padding: 0; margin: 0; }
         li { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); gap: 8px; }
-        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-        .item-left span { cursor: pointer; }
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
         .completed { text-decoration: line-through; opacity: 0.6; }
-        
-        .item-actions { display: flex; align-items: center; gap: 4px; }
-        .btn-action { background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .btn-delete { background: none; border: none; color: #e53935; font-size: 1.4rem; cursor: pointer; }
-        .badge { background-color: var(--primary-color); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <button id="theme-toggle" title="Cambiar modo">🌙</button>
+    <button id="theme-toggle">🌙</button>
 
     <div class="container">
-        <h1>🛒 Mi Lista de la Compra</h1>
+        <h1>🛒 Mi Lista</h1>
 
         <div class="card">
             <h2>Añadir por texto</h2>
@@ -112,7 +71,7 @@
         </div>
 
         <div class="card">
-            <button type="button" id="toggle-canvas-btn" class="collapsible-btn"><span>✏️ Notas a mano</span><span>▼</span></button>
+            <button type="button" id="toggle-canvas-btn" style="background:#555; color:white; width:100%; padding:12px; border:none; border-radius:8px;">✏️ Notas a mano</button>
             <div id="canvas-wrapper">
                 <div class="canvas-container"><canvas id="draw-canvas"></canvas></div>
                 <div class="input-group" style="margin-top:10px;">
@@ -136,48 +95,43 @@
     <script>
         const themeToggleBtn = document.getElementById('theme-toggle');
         const htmlElement = document.documentElement;
+        const pendingBadge = document.getElementById('pending-badge');
+        const list = document.getElementById('shopping-list'), boughtList = document.getElementById('bought-list');
+        const boughtCard = document.getElementById('bought-card');
+        const canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
 
+        // Lógica de tema
         function updateThemeIcon() {
             const isDark = htmlElement.classList.contains('dark-theme');
             themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
         }
-
-        // Aplicar tema guardado al cargar
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            htmlElement.classList.add(savedTheme);
-        }
-        updateThemeIcon();
-
+        
         themeToggleBtn.addEventListener('click', () => {
-            if (htmlElement.classList.contains('dark-theme')) {
-                htmlElement.classList.remove('dark-theme');
-                htmlElement.classList.add('light-theme');
-                localStorage.setItem('theme', 'light-theme');
-            } else {
-                htmlElement.classList.remove('light-theme');
-                htmlElement.classList.add('dark-theme');
-                localStorage.setItem('theme', 'dark-theme');
-            }
+            const isDark = htmlElement.classList.contains('dark-theme');
+            htmlElement.classList.toggle('dark-theme', !isDark);
+            htmlElement.classList.toggle('light-theme', isDark);
+            localStorage.setItem('theme', isDark ? 'light-theme' : 'dark-theme');
             updateThemeIcon();
+            // Recargar color del trazo tras cambio de tema
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
         });
 
-        // --- Resto de tu lógica original (canvas, lista, etc.) ---
-        const form = document.getElementById('item-form'), input = document.getElementById('item-input');
-        const list = document.getElementById('shopping-list'), boughtList = document.getElementById('bought-list');
-        const boughtCard = document.getElementById('bought-card'), pendingBadge = document.getElementById('pending-badge');
-        const canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
-        const canvasWrapper = document.getElementById('canvas-wrapper');
-
-        function resizeCanvas() { 
-            canvas.width = canvas.offsetWidth; 
-            canvas.height = 150; 
-            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
-            ctx.lineWidth = 3; ctx.lineJoin = 'round';
+        // --- Lógica de UI y validación ---
+        function updateUI() {
+            const count = list.children.length;
+            pendingBadge.textContent = count;
+            pendingBadge.style.display = count > 0 ? 'inline-block' : 'none';
+            boughtCard.style.display = boughtList.children.length > 0 ? 'block' : 'none';
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
+        function isCanvasBlank(canvas) {
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width;
+            blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL();
+        }
+
+        // --- Eventos Canvas ---
         let drawing = false;
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
@@ -187,56 +141,51 @@
         }
 
         canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); };
-        canvas.onmousemove = (e) => { if (drawing) { const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); } };
+        canvas.onmousemove = (e) => { if (drawing) { ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); } };
         canvas.onmouseup = () => drawing = false;
         canvas.ontouchstart = (e) => { e.preventDefault(); drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); };
-        canvas.ontouchmove = (e) => { e.preventDefault(); if (drawing) { const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); } };
+        canvas.ontouchmove = (e) => { e.preventDefault(); if (drawing) { ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); } };
         canvas.ontouchend = () => drawing = false;
 
         document.getElementById('toggle-canvas-btn').addEventListener('click', () => {
-            canvasWrapper.style.display = canvasWrapper.style.display === 'block' ? 'none' : 'block';
-            if(canvasWrapper.style.display === 'block') resizeCanvas();
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.display = wrapper.style.display === 'block' ? 'none' : 'block';
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
         });
 
+        document.getElementById('save-drawing').onclick = () => {
+            if (isCanvasBlank(canvas)) return; // No hace nada si está vacío
+            addItem(canvas.toDataURL(), true, false);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+        };
+
+        document.getElementById('clear-canvas').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        // --- Lógica general ---
         function addItem(content, isImage, completed) {
             const li = document.createElement('li');
             li.innerHTML = `
                 <div class="item-left">
                     <input type="checkbox" ${completed ? 'checked' : ''}>
-                    ${isImage ? `<img src="${content}" style="height:28px;">` : `<span>${content}</span>`}
+                    ${isImage ? `<img src="${content}" style="height:30px; border-radius:4px;">` : `<span>${content}</span>`}
                 </div>
-                <div class="item-actions">
-                    <button class="btn-delete">&times;</button>
-                </div>
+                <button class="btn-delete">&times;</button>
             `;
-            
             li.querySelector('input').onchange = (e) => {
                 li.className = e.target.checked ? 'completed' : '';
                 (e.target.checked ? boughtList : list).appendChild(li);
                 updateUI();
             };
             li.querySelector('.btn-delete').onclick = () => { li.remove(); updateUI(); };
-            
-            if (completed) { li.className = 'completed'; boughtList.appendChild(li); }
-            else { list.appendChild(li); }
+            (completed ? boughtList : list).appendChild(li);
             updateUI();
         }
 
-        function updateUI() {
-            pendingBadge.textContent = list.children.length;
-            boughtCard.style.display = boughtList.children.length > 0 ? 'block' : 'none';
-        }
-
-        form.onsubmit = (e) => {
+        document.getElementById('item-form').onsubmit = (e) => {
             e.preventDefault();
-            if(input.value) { addItem(input.value, false, false); input.value = ''; }
+            const input = document.getElementById('item-input');
+            if(input.value.trim()) { addItem(input.value, false, false); input.value = ''; }
         };
-
-        document.getElementById('save-drawing').onclick = () => {
-            addItem(canvas.toDataURL(), true, false);
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-        };
-        document.getElementById('clear-canvas').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
     </script>
 </body>
 </html>
