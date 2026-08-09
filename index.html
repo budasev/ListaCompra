@@ -45,14 +45,23 @@
         .btn-danger { background-color: var(--danger-color); font-size: 0.8rem; padding: 5px 10px; }
         
         ul { list-style: none; padding: 0; margin: 0; }
-        li { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        li { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); gap: 8px; }
         li:last-child { border-bottom: none; }
-        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-        input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary-color); }
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+        .item-left span { cursor: pointer; word-break: break-word; }
+        .item-left span:hover { opacity: 0.8; text-decoration: underline dashed; }
+        
+        input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0; }
         .completed { text-decoration: line-through; opacity: 0.6; }
         .item-left img { max-height: 40px; display: block; }
-        .btn-delete { background: none; border: none; color: #e53935; font-size: 1.4rem; cursor: pointer; }
+        
+        .item-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        .btn-action { background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; padding: 0; }
+        .btn-action:hover { background-color: rgba(0,0,0,0.05); }
+        .btn-delete { background: none; border: none; color: #e53935; font-size: 1.4rem; cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+        
         .empty-message { text-align: center; color: #888888; font-style: italic; margin: 10px 0; }
+        .badge { background-color: var(--primary-color); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -80,7 +89,10 @@
         </div>
 
         <div class="card">
-            <h2>Pendientes <button id="clear-all-btn" class="btn-danger" style="display:none;">Vaciar todo</button></h2>
+            <h2>
+                Pendientes <span id="pending-badge" class="badge">0</span>
+                <button id="clear-all-btn" class="btn-danger" style="display:none;">Vaciar todo</button>
+            </h2>
             <ul id="shopping-list"></ul>
             <p id="empty-notice" class="empty-message">Tu lista está vacía.</p>
         </div>
@@ -95,14 +107,13 @@
         const form = document.getElementById('item-form'), input = document.getElementById('item-input');
         const list = document.getElementById('shopping-list'), boughtList = document.getElementById('bought-list');
         const boughtCard = document.getElementById('bought-card'), clearAllBtn = document.getElementById('clear-all-btn');
-        const emptyNotice = document.getElementById('empty-notice');
+        const emptyNotice = document.getElementById('empty-notice'), pendingBadge = document.getElementById('pending-badge');
         const canvasWrapper = document.getElementById('canvas-wrapper'), canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
         
         let drawing = false;
         function resizeCanvas() { 
             canvas.width = canvas.offsetWidth; 
             canvas.height = 150; 
-            // Toma el color de texto actual del tema de forma automática
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
             ctx.strokeStyle = textColor || '#ffffff';
             ctx.lineWidth = 3; 
@@ -138,30 +149,95 @@
             const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = completed;
             
             checkbox.addEventListener('change', () => {
-                if (checkbox.checked) { li.classList.add('completed'); boughtList.appendChild(li); }
-                else { li.classList.remove('completed'); list.appendChild(li); }
+                if (checkbox.checked) { 
+                    li.classList.add('completed'); 
+                    boughtList.appendChild(li); 
+                    li.querySelector('.item-actions').style.display = 'none'; // Ocultar botones de mover en comprados
+                } else { 
+                    li.classList.remove('completed'); 
+                    list.appendChild(li); 
+                    li.querySelector('.item-actions').style.display = 'flex'; 
+                }
                 updateUI(); save();
             });
 
             itemLeft.appendChild(checkbox);
-            if (isImage) { const img = document.createElement('img'); img.src = content; itemLeft.appendChild(img); }
-            else { const span = document.createElement('span'); span.textContent = content; itemLeft.appendChild(span); }
+            if (isImage) { 
+                const img = document.createElement('img'); img.src = content; itemLeft.appendChild(img); 
+            } else { 
+                const span = document.createElement('span'); 
+                span.textContent = content; 
+                span.title = "Haz clic para editar";
+                span.onclick = () => {
+                    if (checkbox.checked) return; // No editar si ya está comprado
+                    const newVal = prompt("Editar artículo:", span.textContent);
+                    if (newVal !== null && newVal.trim() !== "") {
+                        span.textContent = newVal.trim();
+                        save();
+                    }
+                };
+                itemLeft.appendChild(span); 
+            }
 
-            const del = document.createElement('button'); del.className = 'btn-delete'; del.innerHTML = '&times;';
+            // Contenedor de acciones (Reordenar y Borrar)
+            const actions = document.createElement('div');
+            actions.className = 'item-actions';
+
+            const btnUp = document.createElement('button');
+            btnUp.className = 'btn-action';
+            btnUp.innerHTML = '▲';
+            btnUp.title = 'Mover arriba';
+            btnUp.onclick = () => {
+                const prev = li.previousElementSibling;
+                if (prev) {
+                    list.insertBefore(li, prev);
+                    save();
+                }
+            };
+
+            const btnDown = document.createElement('button');
+            btnDown.className = 'btn-action';
+            btnDown.innerHTML = '▼';
+            btnDown.title = 'Mover abajo';
+            btnDown.onclick = () => {
+                const next = li.nextElementSibling;
+                if (next) {
+                    list.insertBefore(next, li);
+                    save();
+                }
+            };
+
+            const del = document.createElement('button'); 
+            del.className = 'btn-delete'; 
+            del.innerHTML = '&times;';
+            del.title = 'Eliminar';
             del.onclick = () => { li.remove(); updateUI(); save(); };
             
-            li.appendChild(itemLeft); li.appendChild(del);
-            if (completed) { li.classList.add('completed'); boughtList.appendChild(li); }
-            else { list.appendChild(li); }
+            actions.appendChild(btnUp);
+            actions.appendChild(btnDown);
+            actions.appendChild(del);
+
+            li.appendChild(itemLeft); 
+            li.appendChild(actions);
+
+            if (completed) { 
+                li.classList.add('completed'); 
+                actions.style.display = 'none';
+                boughtList.appendChild(li); 
+            } else { 
+                list.appendChild(li); 
+            }
             updateUI();
         }
 
         function updateUI() {
-            const hasPending = list.children.length > 0;
+            const pendingCount = list.children.length;
             const hasBought = boughtList.children.length > 0;
+            
+            pendingBadge.textContent = pendingCount;
             boughtCard.style.display = hasBought ? 'block' : 'none';
-            clearAllBtn.style.display = (hasPending || hasBought) ? 'inline-block' : 'none';
-            emptyNotice.style.display = (!hasPending && !hasBought) ? 'block' : 'none';
+            clearAllBtn.style.display = (pendingCount > 0 || hasBought) ? 'inline-block' : 'none';
+            emptyNotice.style.display = (pendingCount === 0 && !hasBought) ? 'block' : 'none';
         }
 
         form.addEventListener('submit', (e) => {
@@ -173,9 +249,13 @@
 
         function save() {
             const items = [];
-            document.querySelectorAll('li').forEach(li => {
-                items.push({ content: li.querySelector('img') ? li.querySelector('img').src : li.querySelector('span').textContent, 
-                             isImage: !!li.querySelector('img'), completed: li.classList.contains('completed') });
+            // Guardar pendientes y luego comprados
+            document.querySelectorAll('#shopping-list li, #bought-list li').forEach(li => {
+                items.push({ 
+                    content: li.querySelector('img') ? li.querySelector('img').src : li.querySelector('span').textContent, 
+                    isImage: !!li.querySelector('img'), 
+                    completed: li.classList.contains('completed') 
+                });
             });
             localStorage.setItem('list', JSON.stringify(items));
         }
