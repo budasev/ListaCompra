@@ -1,127 +1,545 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark-theme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de la Compra</title>
+    <!-- Evita la inversión forzada de colores en Android Chrome -->
+    <meta name="color-scheme" content="light dark">
+    <title>Mi Lista de la Compra</title>
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --primary: #2e7d32; }
-        .light { --bg: #f4f6f5; --card: #ffffff; --text: #333333; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 500px; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .input-row { display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border: 1px solid #444; border-radius: 6px; background: var(--bg); color: var(--text); }
-        button { padding: 10px 15px; border: none; border-radius: 6px; background: var(--primary); color: white; cursor: pointer; }
-        canvas { background: white; width: 100%; height: 100px; touch-action: none; cursor: crosshair; }
-        ul { list-style: none; padding: 0; }
-        li { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444; }
-        .item-text { display: flex; align-items: center; gap: 10px; }
-        .hidden { display: none; }
+        :root {
+            color-scheme: light dark;
+            --primary-color: #2e7d32;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #333333;
+            --danger-color: #d32f2f;
+        }
+
+        html.dark-theme {
+            --bg-color: #121212 !important;
+            --card-bg: #1e1e1e !important;
+            --text-color: #e0e0e0 !important;
+            --border-color: #333333 !important;
+        }
+
+        html.light-theme {
+            --bg-color: #f4f6f5 !important;
+            --card-bg: #ffffff !important;
+            --text-color: #333333 !important;
+            --border-color: #dddddd !important;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #theme-toggle {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding-top: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: none; /* Oculto por defecto si es 0 */
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 8px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+
+        .collapsible-btn {
+            background-color: #555;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        #canvas-wrapper {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .canvas-container {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            width: 100%;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 150px;
+            cursor: crosshair;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            gap: 8px;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-left input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .completed span, .completed img {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-action {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
     </style>
 </head>
-<body class="dark">
-<div class="container">
-    <h1>🛒 Lista <button id="theme-btn" style="background:none; font-size: 1.5rem;">🌙</button></h1>
-    
-    <div class="card">
-        <div class="input-row">
-            <input type="text" id="item-input" placeholder="Añadir producto...">
-            <button id="add-btn">Añadir</button>
+<body>
+
+    <button id="theme-toggle" title="Cambiar modo">🌙</button>
+
+    <div class="container">
+        <h1>🛒 Mi Lista de la Compra</h1>
+
+        <div class="card">
+            <h2>Añadir por texto</h2>
+            <form id="item-form" class="input-group">
+                <input type="text" id="item-input" placeholder="Ej. Tomates, Leche..." autocomplete="off">
+                <button type="submit">Añadir</button>
+            </form>
         </div>
-    </div>
 
-    <div class="card">
-        <button id="toggle-canvas" style="width:100%;">✏️ Dibujar nota</button>
-        <div id="canvas-area" class="hidden">
-            <canvas id="canvas"></canvas>
-            <button id="clear-canvas" style="background:#777;">Borrar</button>
-            <button id="save-canvas">Guardar</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>Pendientes <button id="clear-pendings" class="hidden btn-danger" style="background:#d32f2f;">Vaciar</button></h2>
-        <ul id="list-pendings"></ul>
-    </div>
-
-    <div class="card">
-        <h2>Comprados <button id="clear-bought" class="hidden btn-danger" style="background:#d32f2f;">Vaciar</button></h2>
-        <ul id="list-bought"></ul>
-    </div>
-</div>
-
-<script>
-    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
-    let drawing = false;
-
-    // --- Lógica de persistencia ---
-    function save() {
-        const items = [];
-        document.querySelectorAll('#list-pendings li').forEach(li => items.push({content: li.dataset.content, isImg: li.dataset.isImg === 'true', completed: false}));
-        document.querySelectorAll('#list-bought li').forEach(li => items.push({content: li.dataset.content, isImg: li.dataset.isImg === 'true', completed: true}));
-        localStorage.setItem('data', JSON.stringify(items));
-        updateUI();
-    }
-
-    function render() {
-        const items = JSON.parse(localStorage.getItem('data') || '[]');
-        document.getElementById('list-pendings').innerHTML = '';
-        document.getElementById('list-bought').innerHTML = '';
-        items.forEach(item => addItemToDOM(item.content, item.isImg, item.completed));
-        updateUI();
-    }
-
-    // --- Lógica de UI ---
-    function addItemToDOM(content, isImg, completed) {
-        const li = document.createElement('li');
-        li.dataset.content = content;
-        li.dataset.isImg = isImg;
-        li.innerHTML = `
-            <div class="item-text">
-                <input type="checkbox" ${completed ? 'checked' : ''}>
-                ${isImg ? `<img src="${content}" style="height:30px;">` : `<span>${content}</span>`}
+        <div class="card">
+            <button type="button" id="toggle-canvas-btn" class="collapsible-btn">
+                <span>✏️ Notas a mano</span>
+                <span>▼</span>
+            </button>
+            <div id="canvas-wrapper">
+                <div class="canvas-container"><canvas id="draw-canvas"></canvas></div>
+                <div class="input-group" style="margin-top:10px;">
+                    <button type="button" id="clear-canvas" style="background:#757575;">Borrar</button>
+                    <button type="button" id="save-drawing">Guardar nota</button>
+                </div>
             </div>
-            <button class="del-btn" style="color:red; background:none; border:none; cursor:pointer;">✕</button>
-        `;
-        li.querySelector('input').onclick = () => { save(); render(); };
-        li.querySelector('.del-btn').onclick = () => { li.remove(); save(); render(); };
-        (completed ? document.getElementById('list-bought') : document.getElementById('list-pendings')).appendChild(li);
-    }
+        </div>
 
-    function updateUI() {
-        document.getElementById('clear-pendings').classList.toggle('hidden', document.getElementById('list-pendings').children.length === 0);
-        document.getElementById('clear-bought').classList.toggle('hidden', document.getElementById('list-bought').children.length === 0);
-    }
+        <div class="card">
+            <h2>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span>Pendientes</span>
+                    <span id="pending-badge" class="badge">0</span>
+                </div>
+                <button type="button" id="clear-all-btn" class="btn-danger">Vaciar todo</button>
+            </h2>
+            <ul id="shopping-list"></ul>
+        </div>
 
-    // --- Eventos ---
-    document.getElementById('add-btn').onclick = () => {
-        const val = document.getElementById('item-input').value;
-        if(val) { addItemToDOM(val, false, false); document.getElementById('item-input').value = ''; save(); }
-    };
+        <div class="card" id="bought-card" style="display: none;">
+            <h2>Ya comprados</h2>
+            <ul id="bought-list"></ul>
+        </div>
+    </div>
 
-    document.getElementById('toggle-canvas').onclick = () => document.getElementById('canvas-area').classList.toggle('hidden');
-    
-    canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-    canvas.onmousemove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-    canvas.onmouseup = () => drawing = false;
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        const pendingBadge = document.getElementById('pending-badge');
+        const list = document.getElementById('shopping-list');
+        const boughtList = document.getElementById('bought-list');
+        const boughtCard = document.getElementById('bought-card');
+        const canvas = document.getElementById('draw-canvas');
+        const ctx = canvas.getContext('2d');
 
-    document.getElementById('save-canvas').onclick = () => {
-        addItemToDOM(canvas.toDataURL(), true, false);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        document.getElementById('canvas-area').classList.add('hidden');
-        save();
-    };
+        // --- Gestión de Tema (Oscuro por defecto) ---
+        function updateThemeIcon() {
+            const isDark = htmlElement.classList.contains('dark-theme');
+            themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+        }
 
-    document.getElementById('theme-btn').onclick = () => {
-        document.body.classList.toggle('light');
-        document.getElementById('theme-btn').textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
-    };
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                if (savedTheme === 'light-theme') {
+                    htmlElement.classList.remove('dark-theme');
+                    htmlElement.classList.add('light-theme');
+                } else {
+                    htmlElement.classList.remove('light-theme');
+                    htmlElement.classList.add('dark-theme');
+                }
+            } else {
+                // Modo oscuro por defecto si no hay nada guardado
+                htmlElement.classList.remove('light-theme');
+                htmlElement.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark-theme');
+            }
+            updateThemeIcon();
+        }
 
-    document.getElementById('clear-pendings').onclick = () => { document.getElementById('list-pendings').innerHTML = ''; save(); };
-    document.getElementById('clear-bought').onclick = () => { document.getElementById('list-bought').innerHTML = ''; save(); };
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = htmlElement.classList.contains('dark-theme');
+            if (isDark) {
+                htmlElement.classList.remove('dark-theme');
+                htmlElement.classList.add('light-theme');
+                localStorage.setItem('theme', 'light-theme');
+            } else {
+                htmlElement.classList.remove('light-theme');
+                htmlElement.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark-theme');
+            }
+            updateThemeIcon();
+            setupCanvasStyle();
+        });
 
-    render();
-</script>
+        // --- Persistencia con LocalStorage y Actualización de UI ---
+        function saveItems() {
+            const items = [];
+            
+            // Guardar pendientes
+            Array.from(list.children).forEach(li => {
+                const img = li.querySelector('img');
+                const span = li.querySelector('.item-text');
+                items.push({
+                    content: img ? img.src : (span ? span.textContent : ''),
+                    isImage: !!img,
+                    completed: false
+                });
+            });
+
+            // Guardar comprados
+            Array.from(boughtList.children).forEach(li => {
+                const img = li.querySelector('img');
+                const span = li.querySelector('.item-text');
+                items.push({
+                    content: img ? img.src : (span ? span.textContent : ''),
+                    isImage: !!img,
+                    completed: true
+                });
+            });
+
+            localStorage.setItem('shopping_list_items', JSON.stringify(items));
+        }
+
+        function loadItems() {
+            const saved = localStorage.getItem('shopping_list_items');
+            if (saved) {
+                try {
+                    const items = JSON.parse(saved);
+                    items.forEach(item => {
+                        addItem(item.content, item.isImage, item.completed, false);
+                    });
+                } catch(e) {
+                    console.error("Error al cargar lista guardada:", e);
+                }
+            }
+        }
+
+        function updateUI(shouldSave = true) {
+            const count = list.children.length;
+            pendingBadge.textContent = count;
+            
+            // Ocultar contador si es 0 (tanto en PC como Móvil)
+            pendingBadge.style.display = count > 0 ? 'inline-block' : 'none';
+            boughtCard.style.display = boughtList.children.length > 0 ? 'block' : 'none';
+
+            if (shouldSave) {
+                saveItems();
+            }
+        }
+
+        // --- Añadir Elementos y Botones de Ordenación ---
+        function addItem(content, isImage, completed = false, shouldSave = true) {
+            const li = document.createElement('li');
+            if (completed) li.classList.add('completed');
+
+            li.innerHTML = `
+                <div class="item-left">
+                    <input type="checkbox" ${completed ? 'checked' : ''}>
+                    ${isImage 
+                        ? `<img src="${content}" style="height:32px; border-radius:4px; max-width:180px; object-fit:contain;">` 
+                        : `<span class="item-text">${escapeHTML(content)}</span>`
+                    }
+                </div>
+                <div class="item-actions">
+                    <button type="button" class="btn-action btn-up" title="Subir">▲</button>
+                    <button type="button" class="btn-action btn-down" title="Bajar">▼</button>
+                    <button type="button" class="btn-delete" title="Eliminar">&times;</button>
+                </div>
+            `;
+
+            // Checkbox
+            li.querySelector('input[type="checkbox"]').onchange = (e) => {
+                const isChecked = e.target.checked;
+                li.classList.toggle('completed', isChecked);
+                (isChecked ? boughtList : list).appendChild(li);
+                updateUI();
+            };
+
+            // Botón Subir
+            li.querySelector('.btn-up').onclick = () => {
+                if (li.previousElementSibling) {
+                    li.parentNode.insertBefore(li, li.previousElementSibling);
+                    updateUI();
+                }
+            };
+
+            // Botón Bajar
+            li.querySelector('.btn-down').onclick = () => {
+                if (li.nextElementSibling) {
+                    li.parentNode.insertBefore(li.nextElementSibling, li);
+                    updateUI();
+                }
+            };
+
+            // Botón Eliminar
+            li.querySelector('.btn-delete').onclick = () => {
+                li.remove();
+                updateUI();
+            };
+
+            // Insertar en lista correspondiente
+            if (completed) {
+                boughtList.appendChild(li);
+            } else {
+                list.appendChild(li);
+            }
+
+            updateUI(shouldSave);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // --- Vaciar Todo ---
+        document.getElementById('clear-all-btn').onclick = () => {
+            if (list.children.length > 0) {
+                if (confirm('¿Seguro que quieres borrar todos los productos pendientes?')) {
+                    list.innerHTML = '';
+                    updateUI();
+                }
+            }
+        };
+
+        // --- Lógica del Canvas ---
+        function setupCanvasStyle() {
+            const isDark = htmlElement.classList.contains('dark-theme');
+            ctx.strokeStyle = isDark ? '#ffffff' : '#000000';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function resizeCanvas() { 
+            canvas.width = canvas.offsetWidth; 
+            canvas.height = 150; 
+            setupCanvasStyle();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function isCanvasBlank(canvas) {
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width;
+            blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL();
+        }
+
+        let drawing = false;
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); };
+        canvas.onmousemove = (e) => { if (drawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+        canvas.onmouseup = () => drawing = false;
+        canvas.ontouchstart = (e) => { e.preventDefault(); drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); };
+        canvas.ontouchmove = (e) => { e.preventDefault(); if (drawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+        canvas.ontouchend = () => drawing = false;
+
+        document.getElementById('toggle-canvas-btn').onclick = () => {
+            const wrapper = document.getElementById('canvas-wrapper');
+            const isHidden = wrapper.style.display === 'none' || !wrapper.style.display;
+            wrapper.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) resizeCanvas();
+        };
+
+        document.getElementById('save-drawing').onclick = () => {
+            if (isCanvasBlank(canvas)) return; // Ignora lienzos en blanco
+            addItem(canvas.toDataURL(), true, false);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
+
+        document.getElementById('clear-canvas').onclick = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
+
+        // Formulario de texto
+        document.getElementById('item-form').onsubmit = (e) => {
+            e.preventDefault();
+            const input = document.getElementById('item-input');
+            if (input.value.trim()) {
+                addItem(input.value.trim(), false, false);
+                input.value = '';
+            }
+        };
+
+        // --- Inicialización al cargar la página ---
+        initTheme();
+        loadItems();
+        updateUI(false);
+    </script>
 </body>
 </html>
