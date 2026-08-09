@@ -149,6 +149,14 @@
             if (show) resizeCanvas();
         });
 
+        // Función para comprobar si el canvas está completamente vacío
+        function isCanvasBlank() {
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width;
+            blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL();
+        }
+
         function addItem(content, isImage, completed) {
             const li = document.createElement('li');
             const itemLeft = document.createElement('div'); itemLeft.className = 'item-left';
@@ -262,8 +270,12 @@
         saved.forEach(i => addItem(i.content, i.isImage, i.completed));
         
         document.getElementById('save-drawing').onclick = () => {
+            if (isCanvasBlank()) {
+                alert("Por favor, escribe algo antes de guardar la nota.");
+                return;
+            }
             addItem(canvas.toDataURL(), true, false);
-            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             canvasWrapper.style.display = 'none';
             save();
         };
