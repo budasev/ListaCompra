@@ -12,6 +12,8 @@
             --card-bg: #ffffff;
             --text-color: #333333;
             --border-color: #dddddd;
+            --danger-color: #d32f2f;
+            --danger-hover: #b71c1c;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -52,6 +54,21 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        .card-header-flex h2 {
+            margin: 0;
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
         h2 {
@@ -102,6 +119,25 @@
             background-color: var(--primary-hover);
         }
 
+        /* Estilos para el panel desplegable de escritura a mano */
+        .collapsible-btn {
+            background-color: #555555;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collapsible-btn:hover {
+            background-color: #444444;
+        }
+
+        #canvas-wrapper {
+            display: none; /* Oculto por defecto */
+            margin-top: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
         .canvas-container {
             position: relative;
             border: 2px dashed var(--border-color);
@@ -133,6 +169,16 @@
         }
         .btn-secondary:hover {
             background-color: #616161;
+        }
+
+        /* Botón de borrar lista completa */
+        .btn-danger {
+            background-color: var(--danger-color);
+            font-size: 0.85rem;
+            padding: 6px 12px;
+        }
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
         }
 
         ul {
@@ -179,7 +225,6 @@
             color: #888888;
         }
 
-        /* Estilo optimizado para el contenedor de la imagen escrita a mano */
         .item-image-container {
             display: inline-block;
             padding: 4px 8px;
@@ -225,6 +270,7 @@
     <div class="container">
         <h1>🛒 Mi Lista de la Compra</h1>
 
+        <!-- Sección 1: Añadir texto -->
         <div class="card">
             <h2>Añadir por texto</h2>
             <form id="item-form" class="input-group">
@@ -233,19 +279,30 @@
             </form>
         </div>
 
+        <!-- Sección 2: Escritura a mano desplegable -->
         <div class="card">
-            <h2>Añadir escribiendo a mano / Notas</h2>
-            <div class="canvas-container">
-                <canvas id="draw-canvas"></canvas>
-            </div>
-            <div class="canvas-actions">
-                <button type="button" id="clear-canvas" class="btn-secondary">Borrar trazo</button>
-                <button type="button" id="save-drawing">Guardar dibujo</button>
+            <button type="button" id="toggle-canvas-btn" class="collapsible-btn">
+                <span>✏️ Escribir nota a mano / Dibujar</span>
+                <span id="toggle-icon">▼</span>
+            </button>
+            
+            <div id="canvas-wrapper">
+                <div class="canvas-container" style="margin-top: 12px;">
+                    <canvas id="draw-canvas"></canvas>
+                </div>
+                <div class="canvas-actions">
+                    <button type="button" id="clear-canvas" class="btn-secondary">Borrar trazo</button>
+                    <button type="button" id="save-drawing">Guardar dibujo</button>
+                </div>
             </div>
         </div>
 
+        <!-- Sección 3: La Lista -->
         <div class="card">
-            <h2>Productos pendientes</h2>
+            <div class="card-header-flex">
+                <h2>Productos pendientes</h2>
+                <button type="button" id="clear-all-btn" class="btn-danger" style="display: none;">Vaciar lista</button>
+            </div>
             <ul id="shopping-list"></ul>
             <p id="empty-notice" class="empty-message">Tu lista está vacía. ¡Añade algo de compra!</p>
         </div>
@@ -256,6 +313,25 @@
         const input = document.getElementById('item-input');
         const list = document.getElementById('shopping-list');
         const emptyNotice = document.getElementById('empty-notice');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+
+        // Control del menú desplegable de escritura a mano
+        const toggleBtn = document.getElementById('toggle-canvas-btn');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const toggleIcon = document.getElementById('toggle-icon');
+        let canvasInitialized = false;
+
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = canvasWrapper.style.display === 'none' || canvasWrapper.style.display === '';
+            canvasWrapper.style.display = isHidden ? 'block' : 'none';
+            toggleIcon.textContent = isHidden ? '▲' : '▼';
+
+            // Al abrir el lienzo por primera vez, ajustamos su tamaño en pantalla para que pinte bien
+            if (isHidden && !canvasInitialized) {
+                resizeCanvas();
+                canvasInitialized = true;
+            }
+        });
 
         const canvas = document.getElementById('draw-canvas');
         const ctx = canvas.getContext('2d');
@@ -263,16 +339,22 @@
 
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            if (rect.width > 0) {
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            } else {
+                canvas.width = 300; // Ancho por defecto de seguridad
+                canvas.height = 150;
+            }
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             ctx.strokeStyle = isDark ? '#ffffff' : '#333333';
             ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
         }
-        window.addEventListener('load', resizeCanvas);
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('resize', () => {
+            if (canvasWrapper.style.display === 'block') resizeCanvas();
+        });
 
         function startPosition(e) {
             isDrawing = true;
@@ -311,7 +393,6 @@
         });
 
         document.getElementById('save-drawing').addEventListener('click', () => {
-            // Creamos un lienzo temporal para añadir un fondo sólido adecuado según el tema actual antes de guardar
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
@@ -321,12 +402,15 @@
             tempCtx.fillStyle = isDark ? '#1e1e1e' : '#ffffff';
             tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-            // Dibujamos encima el trazo original del usuario
             tempCtx.drawImage(canvas, 0, 0);
 
             const dataURL = tempCanvas.toDataURL();
             addItemToList(dataURL, true);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Ocultar el panel al guardar para mayor comodidad en el móvil
+            canvasWrapper.style.display = 'none';
+            toggleIcon.textContent = '▼';
         });
 
         form.addEventListener('submit', (e) => {
@@ -340,6 +424,7 @@
 
         function addItemToList(content, isImage = false, completed = false) {
             emptyNotice.style.display = 'none';
+            clearAllBtn.style.display = 'inline-block';
 
             const li = document.createElement('li');
             if (completed) li.classList.add('completed');
@@ -391,8 +476,18 @@
         function checkEmpty() {
             if (list.children.length === 0) {
                 emptyNotice.style.display = 'block';
+                clearAllBtn.style.display = 'none';
             }
         }
+
+        // Botón para vaciar toda la lista
+        clearAllBtn.addEventListener('click', () => {
+            if (confirm('¿Seguro que quieres borrar toda la lista de la compra?')) {
+                list.innerHTML = '';
+                checkEmpty();
+                saveToLocalStorage();
+            }
+        });
 
         function saveToLocalStorage() {
             const items = [];
