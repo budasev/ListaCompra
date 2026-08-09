@@ -48,12 +48,14 @@
         li { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); gap: 8px; }
         li:last-child { border-bottom: none; }
         .item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-        .item-left span { cursor: pointer; word-break: break-word; }
+        .item-left span { cursor: pointer; word-break: break-word; line-height: 28px; }
         .item-left span:hover { opacity: 0.8; text-decoration: underline dashed; }
         
         input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0; }
         .completed { text-decoration: line-through; opacity: 0.6; }
-        .item-left img { max-height: 40px; display: block; }
+        
+        /* Ajuste clave para igualar la altura de las notas a mano con los textos */
+        .item-left img { height: 28px; max-width: 180px; object-fit: contain; display: block; }
         
         .item-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
         .btn-action { background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; padding: 0; }
@@ -152,7 +154,7 @@
                 if (checkbox.checked) { 
                     li.classList.add('completed'); 
                     boughtList.appendChild(li); 
-                    li.querySelector('.item-actions').style.display = 'none'; // Ocultar botones de mover en comprados
+                    li.querySelector('.item-actions').style.display = 'none'; 
                 } else { 
                     li.classList.remove('completed'); 
                     list.appendChild(li); 
@@ -169,7 +171,7 @@
                 span.textContent = content; 
                 span.title = "Haz clic para editar";
                 span.onclick = () => {
-                    if (checkbox.checked) return; // No editar si ya está comprado
+                    if (checkbox.checked) return;
                     const newVal = prompt("Editar artículo:", span.textContent);
                     if (newVal !== null && newVal.trim() !== "") {
                         span.textContent = newVal.trim();
@@ -179,7 +181,6 @@
                 itemLeft.appendChild(span); 
             }
 
-            // Contenedor de acciones (Reordenar y Borrar)
             const actions = document.createElement('div');
             actions.className = 'item-actions';
 
@@ -189,10 +190,7 @@
             btnUp.title = 'Mover arriba';
             btnUp.onclick = () => {
                 const prev = li.previousElementSibling;
-                if (prev) {
-                    list.insertBefore(li, prev);
-                    save();
-                }
+                if (prev) { list.insertBefore(li, prev); save(); }
             };
 
             const btnDown = document.createElement('button');
@@ -201,10 +199,7 @@
             btnDown.title = 'Mover abajo';
             btnDown.onclick = () => {
                 const next = li.nextElementSibling;
-                if (next) {
-                    list.insertBefore(next, li);
-                    save();
-                }
+                if (next) { list.insertBefore(next, li); save(); }
             };
 
             const del = document.createElement('button'); 
@@ -249,7 +244,6 @@
 
         function save() {
             const items = [];
-            // Guardar pendientes y luego comprados
             document.querySelectorAll('#shopping-list li, #bought-list li').forEach(li => {
                 items.push({ 
                     content: li.querySelector('img') ? li.querySelector('img').src : li.querySelector('span').textContent, 
