@@ -14,7 +14,6 @@
             --border-color: #dddddd;
             --danger-color: #d32f2f;
             --danger-hover: #b71c1c;
-            --separator-bg: #f0f0f0; /* Color del separador grueso */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -23,7 +22,6 @@
                 --card-bg: #1e1e1e;
                 --text-color: #e0e0e0;
                 --border-color: #333333;
-                --separator-bg: #2a2a2a; /* Adaptación para modo oscuro */
             }
         }
 
@@ -48,21 +46,13 @@
         
         ul { list-style: none; padding: 0; margin: 0; }
         li { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        li:last-child { border-bottom: none; }
         .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
         input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary-color); }
         .completed { text-decoration: line-through; opacity: 0.6; }
         .item-image-container img { max-height: 40px; display: block; }
         .btn-delete { background: none; border: none; color: #e53935; font-size: 1.4rem; cursor: pointer; }
-
-        /* Separador grueso */
-        .thick-divider {
-            display: none;
-            height: 12px;
-            background-color: var(--separator-bg);
-            margin: 15px -15px; /* Se extiende hasta los bordes de la tarjeta */
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
-        }
+        .empty-message { text-align: center; color: #888888; font-style: italic; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -89,11 +79,16 @@
             </div>
         </div>
 
+        <!-- Tarjeta de Pendientes -->
         <div class="card">
             <h2>Pendientes <button id="clear-all-btn" class="btn-danger" style="display:none;">Vaciar todo</button></h2>
             <ul id="shopping-list"></ul>
-            
-            <div id="bought-divider" class="thick-divider"></div>
+            <p id="empty-notice" class="empty-message">Tu lista está vacía. ¡Añade algo de compra!</p>
+        </div>
+
+        <!-- Tarjeta independiente de Ya comprados -->
+        <div class="card" id="bought-card" style="display: none;">
+            <h2>Ya comprados</h2>
             <ul id="bought-list"></ul>
         </div>
     </div>
@@ -101,7 +96,8 @@
     <script>
         const form = document.getElementById('item-form'), input = document.getElementById('item-input');
         const list = document.getElementById('shopping-list'), boughtList = document.getElementById('bought-list');
-        const boughtDivider = document.getElementById('bought-divider'), clearAllBtn = document.getElementById('clear-all-btn');
+        const boughtCard = document.getElementById('bought-card'), clearAllBtn = document.getElementById('clear-all-btn');
+        const emptyNotice = document.getElementById('empty-notice');
         const canvasWrapper = document.getElementById('canvas-wrapper'), canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
 
         document.getElementById('toggle-canvas-btn').addEventListener('click', () => {
@@ -143,8 +139,12 @@
         }
 
         function updateUI() {
-            boughtDivider.style.display = boughtList.children.length > 0 ? 'block' : 'none';
-            clearAllBtn.style.display = (list.children.length + boughtList.children.length) > 0 ? 'block' : 'none';
+            const hasPending = list.children.length > 0;
+            const hasBought = boughtList.children.length > 0;
+
+            boughtCard.style.display = hasBought ? 'block' : 'none';
+            clearAllBtn.style.display = (hasPending || hasBought) ? 'inline-block' : 'none';
+            emptyNotice.style.display = (!hasPending && !hasBought) ? 'block' : 'none';
         }
 
         form.addEventListener('submit', (e) => {
@@ -167,6 +167,7 @@
 
         const saved = JSON.parse(localStorage.getItem('list') || '[]');
         saved.forEach(i => addItem(i.content, i.isImage, i.completed));
+        updateUI();
         
         document.getElementById('save-drawing').onclick = () => {
             addItem(canvas.toDataURL(), true, false);
