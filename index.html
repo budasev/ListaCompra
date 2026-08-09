@@ -14,13 +14,13 @@
         .input-group { display: flex; gap: 5px; }
         input { flex: 1; padding: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 5px; }
         button { cursor: pointer; padding: 10px; border: none; border-radius: 5px; background: var(--primary-color); color: white; }
-        
         #theme-toggle { background: none; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 20px; font-size: 1.2rem; }
         .canvas-container { border: 1px solid var(--border-color); background: white; margin: 10px 0; touch-action: none; }
-        canvas { width: 100%; height: 100px; display: block; }
+        canvas { width: 100%; height: 100px; display: block; cursor: crosshair; }
         .hidden { display: none !important; }
         li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); align-items: center; }
-        .btn-del { color: #d32f2f; background: none; font-size: 1.2rem; }
+        .item-content { display: flex; align-items: center; gap: 10px; }
+        .btn-del { color: #d32f2f; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -52,8 +52,8 @@
         <ul id="list"></ul>
     </div>
 
-    <div class="card" id="bought-card" class="hidden">
-        <h2>Comprados <button id="clear-bought" style="background:#d32f2f; padding:5px 10px;">Vaciar</button></h2>
+    <div class="card">
+        <h2>Comprados <button id="clear-bought" class="hidden" style="background:#d32f2f; padding:5px 10px;">Vaciar</button></h2>
         <ul id="bought-list"></ul>
     </div>
 </div>
@@ -62,47 +62,67 @@
     const list = document.getElementById('list'), boughtList = document.getElementById('bought-list'), canvas = document.getElementById('draw-canvas'), ctx = canvas.getContext('2d');
     let drawing = false;
 
-    // Tema
+    // Persistencia
+    function saveAll() {
+        localStorage.setItem('list', list.innerHTML);
+        localStorage.setItem('bought', boughtList.innerHTML);
+        updateUI();
+    }
+
+    window.onload = () => {
+        list.innerHTML = localStorage.getItem('list') || '';
+        boughtList.innerHTML = localStorage.getItem('bought') || '';
+        updateUI();
+    };
+
+    // UI y lógica
     document.getElementById('theme-toggle').onclick = (e) => {
         document.documentElement.classList.toggle('light-theme');
         e.target.textContent = document.documentElement.classList.contains('light-theme') ? '☀️' : '🌙';
     };
 
-    // Canvas
-    document.getElementById('toggle-canvas').onclick = () => document.getElementById('canvas-wrapper').classList.toggle('hidden');
-    canvas.onmousedown = () => drawing = true;
-    canvas.onmousemove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-    canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
-    document.getElementById('clear-canvas').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
-    
+    function updateUI() {
+        document.getElementById('clear-pendings').classList.toggle('hidden', list.children.length === 0);
+        document.getElementById('clear-bought').classList.toggle('hidden', boughtList.children.length === 0);
+    }
+
+    function createItem(content, isImage, isBought = false) {
+        const li = document.createElement('li');
+        li.innerHTML = `<div class="item-content"><input type="checkbox" ${isBought ? 'checked' : ''}> ${isImage ? `<img src="${content}" style="height:30px">` : content}</div><button class="btn-del">×</button>`;
+        li.querySelector('input').onchange = (e) => { (e.target.checked ? boughtList : list).appendChild(li); saveAll(); };
+        li.querySelector('.btn-del').onclick = () => { li.remove(); saveAll(); };
+        (isBought ? boughtList : list).appendChild(li);
+        saveAll();
+    }
+
+    // Canvas corregido
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: (e.clientX || e.touches[0].clientX) - rect.left, y: (e.clientY || e.touches[0].clientY) - rect.top };
+    }
+
+    canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+    canvas.onmousemove = (e) => { if(drawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+    canvas.onmouseup = () => drawing = false;
+
     document.getElementById('save-canvas').onclick = () => {
-        if (ctx.getImageData(0,0,canvas.width,canvas.height).data.some(channel => channel !== 0)) {
-            addItem(canvas.toDataURL(), true);
+        if (!canvas.toDataURL().startsWith('data:image/png;base64,iVBORw0KGgoAAA')) { // Si no está vacío
+            createItem(canvas.toDataURL(), true);
             ctx.clearRect(0,0,canvas.width,canvas.height);
             document.getElementById('canvas-wrapper').classList.add('hidden');
         }
     };
 
-    function addItem(content, isImage) {
-        const li = document.createElement('li');
-        li.innerHTML = `<div>${isImage ? `<img src="${content}" style="height:30px">` : content}</div><button class="btn-del">×</button>`;
-        li.querySelector('.btn-del').onclick = () => { li.remove(); updateUI(); };
-        list.appendChild(li);
-        updateUI();
-    }
-
     document.getElementById('item-form').onsubmit = (e) => {
         e.preventDefault();
         const val = document.getElementById('item-input').value;
-        if(val) { addItem(val, false); document.getElementById('item-input').value = ''; }
+        if(val) { createItem(val, false); document.getElementById('item-input').value = ''; }
     };
 
-    function updateUI() {
-        document.getElementById('clear-pendings').classList.toggle('hidden', list.children.length === 0);
-    }
-    
-    document.getElementById('clear-pendings').onclick = () => { list.innerHTML = ''; updateUI(); };
-    updateUI();
+    document.getElementById('clear-pendings').onclick = () => { list.innerHTML = ''; saveAll(); };
+    document.getElementById('clear-bought').onclick = () => { boughtList.innerHTML = ''; saveAll(); };
+    document.getElementById('toggle-canvas').onclick = () => document.getElementById('canvas-wrapper').classList.toggle('hidden');
+    document.getElementById('clear-canvas').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
 </script>
 </body>
 </html>
